@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Jason音乐</string>
+    <string name="tip_reach_top">已经到达列表末尾，现在播放最后一首</string>
+    <string name="tip_reach_bottom">已经到达列表首位，现在播放第一首</string>
+    <string name="tip_no_music_file">没有找到音乐文件，请先添加音乐文件</string>
+</resources>
