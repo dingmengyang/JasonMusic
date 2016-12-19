@@ -1,9 +1,14 @@
 package com.jikexueyuan.mediaplayerdemo;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,19 +33,62 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
 
     ArrayList<Music> musicArrayList;
-    MediaPlayer player= new MediaPlayer();;
+    //MediaPlayer player = new MediaPlayer();
+    ;
     int number = 0;
+    private int status=MusicService.COMMAND_UNKNOWN;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        startService(new Intent(MainActivity.this,MusicService.class));
         findViews();
         registerListener();
         initMusicList();
+        registerStatusReceiver();
         //initMusicListBySearch();
         initListView();
         checkMusicFile();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sendBroadcastOnCommand(MusicService.COMMAND_CHECK_PLAYING);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (status==MusicService.STATUS_STOPPED){
+            stopService(new Intent(MainActivity.this,MusicService.class));
+        }
+        super.onDestroy();
+    }
+
+    StatusReceiver receiver;
+    private void registerStatusReceiver() {
+        receiver=new StatusReceiver();
+        IntentFilter filter=new IntentFilter(MusicService.BROADCAST_MUSICSERVICE_UPDATE_STATUS);
+        registerReceiver(receiver,filter);
+    }
+
+    private void sendBroadcastOnCommand(int command) {
+        Intent intent=new Intent(MusicService.BROADCAST_MUSICSERVICE_CONTROL);
+        intent.putExtra("command", command);
+        switch (command) {
+            case MusicService.COMMAND_PLAY:
+                intent.putExtra("number",number);
+                break;
+            case MusicService.COMMAND_PAUSE:
+            case MusicService.COMMAND_PLAY_LAST:
+            case MusicService.COMMAND_PLAY_NEXT:
+            case MusicService.COMMAND_STOP:
+            case MusicService.COMMAND_RESUME:
+            default:
+                break;
+        }
+        sendBroadcast(intent);
     }
 
     private void checkMusicFile() {
@@ -100,34 +148,36 @@ public class MainActivity extends AppCompatActivity {
         }
         removeSameMusic();
     }
-//虽然列表显示有重复的，但是还是有微小的区别，可能要通过判断歌曲名和歌手名来去掉重复
+
+    //虽然列表显示有重复的，但是还是有微小的区别，可能要通过判断歌曲名和歌手名来去掉重复
     private void removeSameMusic() {
-        for (int i=0;i<musicArrayList.size();i++){
-            Music tempMusic=musicArrayList.get(i);
-            for (int j=i+1;j<musicArrayList.size();j++){
-                Music checkMusic=musicArrayList.get(j);
-                if ((tempMusic.getMusicName().equals(checkMusic.getMusicName()))&&
+        for (int i = 0; i < musicArrayList.size(); i++) {
+            Music tempMusic = musicArrayList.get(i);
+            for (int j = i + 1; j < musicArrayList.size(); j++) {
+                Music checkMusic = musicArrayList.get(j);
+                if ((tempMusic.getMusicName().equals(checkMusic.getMusicName())) &&
                         (tempMusic.getMusicArtist().equals(checkMusic.getMusicArtist())))
                     musicArrayList.remove(j);
             }
         }
     }
 
-    private void initMusicListBySearch(){
-        File sdCard= Environment.getExternalStorageDirectory();
-        musicArrayList=MusicList.getMusicList();
-        if (sdCard.exists()){
+    private void initMusicListBySearch() {
+        File sdCard = Environment.getExternalStorageDirectory();
+        musicArrayList = MusicList.getMusicList();
+        if (sdCard.exists()) {
             searchMusic(sdCard.listFiles());
-        }else Toast.makeText(MainActivity.this,"SD卡不存在！",Toast.LENGTH_SHORT).show();
+        } else Toast.makeText(MainActivity.this, "SD卡不存在！", Toast.LENGTH_SHORT).show();
     }
 
     //一开始在mMusicCursor遍历时isAfterLast()没有加“！”（musicArrayList压根就没有加入数据）,所以自己写了这个方法...
     private void searchMusic(File[] files) {
+
         if (files.length > 0) {
             for (File tempFile : files) {
                 if (tempFile.isDirectory()) {
                     searchMusic(tempFile.listFiles());
-                }else {
+                } else {
                     checkAndAddFile(tempFile);
                 }
             }
@@ -135,54 +185,74 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkAndAddFile(File file) {
-        String str=file.getName();
-        if ("mp3".equals(str.substring(str.length()-3))){
-            musicArrayList.add(new Music(str,"jason",file.getAbsolutePath(),"1000"));
+        String str = file.getName();
+        if ("mp3".equals(str.substring(str.length() - 3))) {
+            musicArrayList.add(new Music(str, "jason", file.getAbsolutePath(), "1000"));
         }
     }
+
 
     private void registerListener() {
         btnPre.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                moveNumberToPrevious();
-                play(number);
-                btnPlay.setBackgroundResource(R.drawable.pause);
+//                moveNumberToPrevious();
+//                play(number);
+//                btnPlay.setBackgroundResource(R.drawable.pause);
+
+                sendBroadcastOnCommand(MusicService.COMMAND_PLAY_LAST);
+
             }
         });
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (player != null && player.isPlaying()) {
-                    pause();
-                    btnPlay.setBackgroundResource(R.drawable.play);
-                } else {
-                    play(number);
-                    btnPlay.setBackgroundResource(R.drawable.pause);
+//                if (player != null && player.isPlaying()) {
+//                    pause();
+//                    btnPlay.setBackgroundResource(R.drawable.play);
+//                } else {
+//                    play(number);
+//                    btnPlay.setBackgroundResource(R.drawable.pause);
+//                }
+                switch (status){
+                    case MusicService.STATUS_PLAYING:
+                        sendBroadcastOnCommand(MusicService.COMMAND_PAUSE);
+                        break;
+                    case MusicService.STATUS_PAUSED:
+                        sendBroadcastOnCommand(MusicService.COMMAND_RESUME);
+                        break;
+                    case MusicService.STATUS_STOPPED:
+                        sendBroadcastOnCommand(MusicService.COMMAND_PLAY);
+                        break;
+                    default:
+                        break;
                 }
             }
         });
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                stop();
-                btnPlay.setBackgroundResource(R.drawable.play);
+//                stop();
+//                btnPlay.setBackgroundResource(R.drawable.play);
+                sendBroadcastOnCommand(MusicService.COMMAND_STOP);
             }
         });
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                moveNumberToNext();
-                play(number);
-                btnPlay.setBackgroundResource(R.drawable.pause);
+//                moveNumberToNext();
+//                play(number);
+//                btnPlay.setBackgroundResource(R.drawable.pause);
+                sendBroadcastOnCommand(MusicService.COMMAND_PLAY_NEXT);
             }
         });
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 number = position;
-                play(number);
-                btnPlay.setBackgroundResource(R.drawable.pause);
+//                play(number);
+//                btnPlay.setBackgroundResource(R.drawable.pause);
+                sendBroadcastOnCommand(MusicService.COMMAND_PLAY);
             }
         });
     }
@@ -195,65 +265,27 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.listView1);
     }
 
-    private void play(int number) {
-        if (player != null && player.isPlaying()) {
-            player.stop();
-        }
-        load(number);
-        player.seekTo(position);
-        player.start();
-    }
+    class StatusReceiver extends BroadcastReceiver{
 
-    int position=0;
-    private void pause() {
-        if (player.isPlaying()) {
-            player.pause();
-            position=player.getCurrentPosition();
-        }
-    }
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            status=intent.getIntExtra("status",-1);
+            switch (status){
+                case MusicService.STATUS_PLAYING:
+                    btnPlay.setBackgroundResource(R.drawable.pause);
+                    break;
+                case MusicService.STATUS_PAUSED:
+                case MusicService.STATUS_STOPPED:
+                    btnPlay.setBackgroundResource(R.drawable.play);
+                    break;
+                case MusicService.STATUS_COMPLETED:
+                    sendBroadcastOnCommand(MusicService.COMMAND_PLAY_NEXT);
 
-    private void stop() {
-        player.stop();
-        position=0;
-    }
-
-    private void resume() {
-        player.start();
-    }
-
-    private void replay() {
-        player.start();
-    }
-
-    private void moveNumberToNext() {
-        position=0;
-        if (number == musicArrayList.size() - 1) {
-            Toast.makeText(MainActivity.this, R.string.tip_reach_bottom, Toast.LENGTH_SHORT).show();
-        } else {
-            number++;
-            play(number);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
-    private void moveNumberToPrevious() {
-        position=0;
-        if (number == 0) {
-            Toast.makeText(MainActivity.this, R.string.tip_reach_top, Toast.LENGTH_SHORT).show();
-        } else {
-            number--;
-            play(number);
-        }
-    }
-
-    private void load(int number) {
-        Music music = musicArrayList.get(number);
-        try {
-            player.reset();
-            player.setDataSource(music.getMusicPath());
-            player.prepare();
-        } catch (IOException e) {
-            Log.d("jason", "load方法出错！" + e.toString());
-            e.printStackTrace();
-        }
-    }
 }
