@@ -3,4 +3,10 @@
     <string name="tip_reach_top">已经到达列表末尾，现在播放最后一首</string>
     <string name="tip_reach_bottom">已经到达列表首位，现在播放第一首</string>
     <string name="tip_no_music_file">没有找到音乐文件，请先添加音乐文件</string>
+    <string name="about">关于我们</string>
+    <string name="theme">主题</string>
+    <string name="quit">退出</string>
+    <string name="quit_message">您确定要退出吗？</string>
+    <string name="about_us">简介：这是一个简单的音乐播放器例子，除了实现基本的音乐播放功能，还实现了后台音乐播放、切换主题、
+    进度条控制播放等功能。欢迎提出程序BUG，感谢您的支持^_^</string>
 </resources>

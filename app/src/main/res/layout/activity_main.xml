@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/love"
+    android:id="@+id/relative"
     tools:context="com.jikexueyuan.mediaplayerdemo.MainActivity">
 
     <ListView
@@ -11,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_above="@+id/linearLayout1"
-
+        android:background="@drawable/lv_bg"
         android:layout_margin="10dp" />
 
     <LinearLayout
@@ -20,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_margin="10dp"
-
+        android:background="@drawable/lv_bg"
         android:gravity="center"
         android:orientation="vertical">
 
@@ -74,6 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
+                android:paddingLeft="5dp"
                 android:id="@+id/tv1"
                 android:text="00:00"/>
             <TextView
@@ -81,6 +84,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:id="@+id/tv2"
+                android:paddingRight="5dp"
                 android:text="00:00"/>
         </RelativeLayout>
     </LinearLayout>

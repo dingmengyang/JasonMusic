@@ -76,6 +76,13 @@ public class MusicService extends Service {
     private void sendBroadcastOnStatusChanged(int status){
         Intent intent=new Intent(BROADCAST_MUSICSERVICE_UPDATE_STATUS);
         intent.putExtra("status",status);
+        if (status!=STATUS_STOPPED){
+            intent.putExtra("time",player.getCurrentPosition());
+            intent.putExtra("duration",player.getDuration());
+            intent.putExtra("number",number);
+            intent.putExtra("musicName",musicArrayList.get(number).getMusicName());
+            intent.putExtra("musicArtist",musicArrayList.get(number).getMusicArtist());
+        }
         sendBroadcast(intent);
     }
 
@@ -109,11 +116,17 @@ public class MusicService extends Service {
                         sendBroadcastOnStatusChanged(MusicService.STATUS_PLAYING);
                     }
                     break;
+                case COMMAND_SEEK_TO:
+                    seekTo(intent.getIntExtra("time",0));
                 case COMMAND_UNKNOWN:
                 default:
                     break;
             }
         }
+    }
+
+    private void seekTo(int time){
+        player.seekTo(time);
     }
 
     private void play(int number) {
@@ -189,6 +202,7 @@ public class MusicService extends Service {
             Log.d("jason", "load方法出错！" + e.toString());
             e.printStackTrace();
         }
+
         player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -200,4 +214,5 @@ public class MusicService extends Service {
             }
         });
     }
+
 }
