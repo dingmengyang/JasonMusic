@@ -82,6 +82,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:maxLength="20"
+                android:id="@+id/tv3"
+                android:paddingRight="5dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:id="@+id/tv2"
                 android:paddingRight="5dp"

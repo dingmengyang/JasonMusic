@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -35,6 +37,7 @@ public class MusicService extends Service {
     public static final String BROADCAST_MUSICSERVICE_CONTROL = "MusicService.ACTION_CONTROL";
     public static final String BROADCAST_MUSICSERVICE_UPDATE_STATUS = "MusicService.ACTION_UPDATE";
 
+    private boolean phone=false;
     private int number = 0;
     private int status;
     private MediaPlayer player = new MediaPlayer();
@@ -57,6 +60,28 @@ public class MusicService extends Service {
         receiver=new CommandReceiver();
         IntentFilter filter = new IntentFilter(MusicService.BROADCAST_MUSICSERVICE_CONTROL);
         registerReceiver(receiver, filter);
+        TelephonyManager telephonyManager= (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        telephonyManager.listen(new MyPhoneListener(),PhoneStateListener.LISTEN_CALL_STATE );
+    }
+
+    class MyPhoneListener extends PhoneStateListener{
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+            switch (state){
+                case TelephonyManager.CALL_STATE_RINGING:
+                    if (status==MusicService.STATUS_PLAYING){
+                        pause();
+                        phone=true;
+                    }
+                    break;
+                case TelephonyManager.CALL_STATE_IDLE:
+                    if (phone){
+                        resume();
+                        phone=false;
+                    }
+                    break;
+            }
+        }
     }
 
     @Override

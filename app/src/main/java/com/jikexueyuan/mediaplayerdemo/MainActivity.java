@@ -6,18 +6,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.media.MediaPlayer;
-import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +27,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,17 +36,21 @@ public class MainActivity extends AppCompatActivity {
 
     ImageButton btnPre, btnPlay, btnStop, btnNext;
     ListView listView;
-    TextView tv_current,tv_total;
+    TextView tv_current,tv_total,tv_name;
     SeekBar seekBar;
     RelativeLayout root_layout;
     Handler seekBarHandler;
+    Handler updateNameHandler;
     private int duration=0;
     private int time=0;
 
     private static final int PROGRESS_INCREASE=0;
     private static final int PROGRESS_PAUSE=1;
     private static final int PROGRESS_RESET=2;
+    private static final int UPDATE_NAME=3;
+    private static final int LENGTH=20;
     ArrayList<Music> musicArrayList;
+
     //MediaPlayer player = new MediaPlayer();
     ;
     int number = 0;
@@ -71,7 +70,32 @@ public class MainActivity extends AppCompatActivity {
         initListView();
         checkMusicFile();
         initSeekBarHandler();
+        initUpdateNameHandler();
+    }
 
+    int update_position=0;
+    String song_name;
+    int update_divide=0;
+    int update_total=0;
+    private void initUpdateNameHandler() {
+        updateNameHandler=new Handler(Looper.getMainLooper()){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                if (msg.what==UPDATE_NAME){
+                    String str;
+                    if (update_position<update_divide){
+                        str=song_name.substring(update_position,update_position+LENGTH);
+                    }else {
+                        str=song_name.substring(update_position,update_total);
+                    }
+                    tv_name.setText(str);
+                    update_position++;
+                    if (update_position> update_total) update_position=0;
+                    updateNameHandler.sendEmptyMessageDelayed(UPDATE_NAME, 300);
+                }
+            }
+        };
     }
 
     private void initSeekBarHandler() {
@@ -345,6 +369,8 @@ public class MainActivity extends AppCompatActivity {
         seekBar= (SeekBar) findViewById(R.id.seekBar);
         tv_current= (TextView) findViewById(R.id.tv1);
         tv_total= (TextView) findViewById(R.id.tv2);
+        tv_name= (TextView) findViewById(R.id.tv3);
+
         root_layout= (RelativeLayout) findViewById(R.id.relative);
     }
 
@@ -357,6 +383,7 @@ public class MainActivity extends AppCompatActivity {
             switch (status){
                 case MusicService.STATUS_PLAYING:
                     seekBarHandler.removeMessages(PROGRESS_INCREASE);
+                    updateNameHandler.removeMessages(UPDATE_NAME);
                     time=intent.getIntExtra("time",0);
                     duration=intent.getIntExtra("duration",0);
                     number=intent.getIntExtra("number",0);
@@ -365,6 +392,9 @@ public class MainActivity extends AppCompatActivity {
                     seekBar.setMax(duration);
                     seekBarHandler.sendEmptyMessage(PROGRESS_INCREASE);
                     tv_total.setText(formatTime(duration));
+                    tv_name.setText("");
+                    j=0;
+                    showSongName(intent.getStringExtra("musicName"), intent.getStringExtra("musicArtist"));
                     btnPlay.setBackgroundResource(R.drawable.pause);
                     break;
                 case MusicService.STATUS_PAUSED:
@@ -374,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
                 case MusicService.STATUS_STOPPED:
                     time=0;
                     duration=0;
+                    tv_name.setText("");
                     tv_current.setText(formatTime(time));
                     tv_total.setText(formatTime(duration));
                     seekBarHandler.sendEmptyMessage(PROGRESS_RESET);
@@ -381,6 +412,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case MusicService.STATUS_COMPLETED:
                     number=intent.getIntExtra("number",0);
+                    tv_name.setText("");
                     if (number==musicArrayList.size()-1){
                         sendBroadcastOnCommand(MusicService.STATUS_STOPPED);
                     }else {
@@ -392,6 +424,20 @@ public class MainActivity extends AppCompatActivity {
                 default:
                     break;
             }
+        }
+    }
+
+    int j=0;
+    private void showSongName(String musicName, String musicArtist) {
+
+        song_name="  "+musicName+" - "+musicArtist;
+        if (song_name.length()>LENGTH){
+            update_divide=song_name.length()-LENGTH;
+            update_total=song_name.length();
+
+            updateNameHandler.sendEmptyMessage(UPDATE_NAME);
+        }else {
+            tv_name.setText(song_name);
         }
     }
 
