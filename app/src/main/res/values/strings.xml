@@ -9,4 +9,12 @@
     <string name="quit_message">您确定要退出吗？</string>
     <string name="about_us">简介：这是一个简单的音乐播放器例子，除了实现基本的音乐播放功能，还实现了后台音乐播放、切换主题、
     进度条控制播放等功能。欢迎提出程序BUG，感谢您的支持^_^</string>
+
+    <string name="playmode">播放模式</string>
+    <string name="sequence">顺序播放</string>
+    <string name="singlecycle">单曲循环</string>
+    <string name="listcycle">列表循环</string>
+    <string name="audio">音量：</string>
+    <string name="sleep">睡眠</string>
+    <string name="sleep_mode">睡眠设置</string>
 </resources>

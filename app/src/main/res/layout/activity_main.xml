@@ -82,6 +82,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/tv1"
+                android:layout_marginLeft="5dp"
+                android:id="@+id/main_tv_sleep"
+                android:text="@string/sleep"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:maxLength="20"
                 android:id="@+id/tv3"
