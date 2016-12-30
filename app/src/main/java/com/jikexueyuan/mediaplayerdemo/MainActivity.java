@@ -3,6 +3,8 @@ package com.jikexueyuan.mediaplayerdemo;
 import android.app.ActionBar;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,10 +20,12 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -78,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private static boolean sleepMode;
 
     //MediaPlayer player = new MediaPlayer();
-    ;
+    private GestureDetector gestureDetector;
     int number = 0;
     private int status = MusicService.COMMAND_UNKNOWN;
 
@@ -99,6 +103,62 @@ public class MainActivity extends AppCompatActivity {
         initUpdateNameHandler();
         playMode = MODE_LIST_SEQUENCE;
         sleepMode = NOTSLEEP;
+        initGestrueDetector();
+
+    }
+
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return gestureDetector.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (gestureDetector.onTouchEvent(ev)){
+            ev.setAction(MotionEvent.ACTION_CANCEL);
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private void initGestrueDetector() {
+        gestureDetector=new GestureDetector(this, new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1.getX()-e2.getX()>150){
+                    Intent intent=new Intent(MainActivity.this,LyricActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.to_right_enter,R.anim.to_right_exit);
+                }
+                return false;
+            }
+        });
     }
 
     TextView audio_tv;
@@ -176,7 +236,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }, 2000);
         } else {
-            System.exit(0);
+            //System.exit(0);
+            Intent intent=new Intent(MainActivity.this,MusicService.class);
+            stopService(intent);
+            finish();
         }
     }
 
@@ -254,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
         if (status == MusicService.STATUS_STOPPED) {
             stopService(new Intent(MainActivity.this, MusicService.class));
         }
-
+        unregisterReceiver(receiver);
         super.onDestroy();
     }
 
@@ -457,6 +520,10 @@ public class MainActivity extends AppCompatActivity {
 //                play(number);
 //                btnPlay.setBackgroundResource(R.drawable.pause);
                 sendBroadcastOnCommand(MusicService.COMMAND_PLAY);
+                Intent intent=new Intent(MainActivity.this,LyricActivity.class);
+                intent.putExtra("musicName",musicArrayList.get(number).getMusicName());
+                intent.putExtra("musicArtist",musicArrayList.get(number).getMusicArtist());
+                startActivity(intent);
             }
         });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -655,6 +722,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.menu_sleep:
                 showSleepDialog();
                 break;
+            case R.id.menu_equalizer:
+                Intent intent=new Intent(MainActivity.this,EqualizerActivity.class);
+                intent.putExtra("number",number);
+                startActivity(intent);
+                break;
             case R.id.menu_about:
                 new AlertDialog.Builder(this).setTitle(R.string.app_name).setMessage(R.string.about_us).show();
                 break;
@@ -663,7 +735,10 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                System.exit(0);
+                                //System.exit(0);
+                                Intent intent=new Intent(MainActivity.this,MusicService.class);
+                                stopService(intent);
+                                finish();
                             }
                         }).setNegativeButton("取消", null).show();
                 break;
@@ -720,6 +795,7 @@ public class MainActivity extends AppCompatActivity {
                                 Intent intent = new Intent(MainActivity.this, CloseActivity.class);
                                 PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
                                 alarmManager.cancel(pi);
+                                finish();
                             }
                             dialog.dismiss();
                             tv_sleep.setVisibility(View.INVISIBLE);

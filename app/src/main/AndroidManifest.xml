@@ -4,7 +4,10 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     <application
         android:allowBackup="true"
@@ -23,8 +26,25 @@
         <service
             android:name=".MusicService"
             android:enabled="true"
-            android:exported="true"/>
-        <activity android:name=".CloseActivity"/>
+            android:exported="true" />
+
+        <activity android:name=".CloseActivity" />
+        <activity android:name=".LyricActivity" />
+
+        <receiver
+            android:name=".WidgetProviderClass"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="MusicService.ACTION_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_provider" />
+        </receiver>
+
+        <activity android:name=".EqualizerActivity"></activity>
     </application>
 
 </manifest>

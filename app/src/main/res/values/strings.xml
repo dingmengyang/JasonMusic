@@ -17,4 +17,6 @@
     <string name="audio">音量：</string>
     <string name="sleep">睡眠</string>
     <string name="sleep_mode">睡眠设置</string>
+    <string name="equalizer">均衡器设置</string>
+
 </resources>
